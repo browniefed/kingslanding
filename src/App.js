@@ -4,6 +4,8 @@ import { Layer, Stage, Image } from "react-konva";
 import firebase from "firebase";
 import { connect } from "react-firebase";
 import DragImage from "./drag_img";
+import SaveModal from "./modal";
+import GalleryModal from "./gallery_modal";
 
 import "./app.css";
 
@@ -108,23 +110,25 @@ const PLACE_IMAGES = [
   {
     path: "/images/Fence.png",
     multiple: true
-  },
+  }
 ];
 
 const windowWidth = window.innerWidth;
 const windowHeight = window.innerHeight;
-const aspectWidthPercent = ((windowHeight)/2325) * 1650;
+const aspectWidthPercent = windowHeight / 2325 * 1650;
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       background_image: null,
-      images: []
+      images: [],
+      galleryOpen: false
     };
     this.handleCapture = this.handleCapture.bind(this);
     this.handleAddImage = this.handleAddImage.bind(this);
     this.handleRemoveImage = this.handleRemoveImage.bind(this);
+    this.handleModalHide = this.handleModalHide.bind(this);
   }
 
   componentDidMount() {
@@ -135,16 +139,34 @@ class App extends Component {
 
   handleCapture() {
     const image = this.stage.getStage().toDataURL({
-      mimeType: "image/png"
+      mimeType: "image/png",
+      quality: .1,
     });
 
-    const abc = this.props.addImage(image);
+    const savedImage = this.props.addImage(image);
 
-    abc.then((data) => {
-      this.props.addValue(data.getKey(), "demographic", "white")
+    this.setState({
+      image,
+      open: true,
+      id: savedImage.getKey()
     });
   }
+
+  handleModalHide() {
+    this.setState({
+      image: null,
+      open: false,
+      id: null,
+      images: []
+    });
+  }
+
   handleAddImage(image) {
+    const hasImage = this.state.images.find(imagePath => imagePath === image);
+    const masterImage = PLACE_IMAGES.find(({ path }) => path === image);
+
+    if (hasImage && !masterImage.multiple) return;
+
     this.setState(state => ({
       images: [...state.images, image]
     }));
@@ -154,15 +176,29 @@ class App extends Component {
     images.splice(index, 1);
     this.setState({
       images
-    });  
+    });
   }
   render() {
     return (
       <div className="container">
-        <div className="left" style={{width: `${aspectWidthPercent}px`}}>
-          <Stage width={aspectWidthPercent} height={windowHeight} ref={stage => this.stage = stage}>
+        <SaveModal
+          open={this.state.open}
+          onHide={this.handleModalHide}
+          image={this.state.image}
+          id={this.state.id}
+        />
+        <GalleryModal
+          open={this.state.galleryOpen}
+          onHide={() => this.setState({ galleryOpen: false })}
+        />
+        <div className="left" style={{ width: `${aspectWidthPercent}px` }}>
+          <Stage
+            width={aspectWidthPercent}
+            height={windowHeight}
+            ref={stage => this.stage = stage}
+          >
             <Layer>
-              <Image 
+              <Image
                 image={this.state.background_image}
                 width={aspectWidthPercent}
                 height={windowHeight}
@@ -173,8 +209,8 @@ class App extends Component {
                 return (
                   <DragImage
                     image={img}
-                    width={aspectWidthPercent * .12}
-                    height={aspectWidthPercent * .12}
+                    width={aspectWidthPercent * 0.12}
+                    height={aspectWidthPercent * 0.12}
                     onRemove={() => this.handleRemoveImage(index)}
                   />
                 );
@@ -182,26 +218,33 @@ class App extends Component {
             </Layer>
           </Stage>
         </div>
-        <div className="right" style={{width: `${windowWidth - aspectWidthPercent - 30}px`}}>
-          <div>
+        <div
+          className="right"
+          style={{ width: `${windowWidth - aspectWidthPercent - 150}px` }}
+        >
+          <div className="bar">
             <span>Instructions</span>
-            <button onClick={this.handleCapture}>Send Picture</button>
+            <button className="button" onClick={this.handleCapture}>Send Picture</button>
+            <button className="button" onClick={() => this.setState({ galleryOpen: true })}>
+              View Gallery
+            </button>
           </div>
           {PLACE_IMAGES.map(({ path, multiple }) => {
-
-            const hasImage = this.state.images.find((imagePath) => imagePath === path);
+            const hasImage = this.state.images.find(
+              imagePath => imagePath === path
+            );
             const classes = cx({
-              "image": true,
-              "disabled": hasImage && !multiple
+              image: true,
+              disabled: hasImage && !multiple
             });
 
             return (
-              <img 
-              className={classes}
-              src={path} 
-              onClick={() => this.handleAddImage(path)} 
-            />
-            )
+              <img
+                className={classes}
+                src={path}
+                onClick={() => this.handleAddImage(path)}
+              />
+            );
           })}
         </div>
       </div>
