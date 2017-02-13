@@ -1,0 +1,19 @@
+.left {
+  float: left;
+  height: 100vh;
+}
+
+.right {
+  float: right;
+  overflow: auto;
+  height: 100vh;
+}
+
+.image {
+  width: calc(22% - 20px);
+  margin: 0 10px;
+}
+
+.disabled {
+  opacity: .3;
+}

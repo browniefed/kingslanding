@@ -42,6 +42,8 @@ export default class DragImage extends Component {
         onDragStart={this.onDragStart}
         onDragEnd={this.onDragEnd}
         image={this.state.image}
+        width={this.props.width}
+        height={this.props.height}
         shadowOffsetX={5}
         shadowOffsetY={5}
         shadowColor="rgba(0,0,0,.5)"
