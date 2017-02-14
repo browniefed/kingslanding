@@ -5,6 +5,7 @@
   "devDependencies": {
     "react-scripts": "0.8.5"
   },
+  "alias": "kings.now.sh",
   "dependencies": {
     "classnames": "^2.2.5",
     "express": "^4.14.1",
